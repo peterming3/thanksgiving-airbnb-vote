@@ -4,6 +4,7 @@
 // concurrent votes/adds/removes can't overwrite each other.
 import { uid } from '../lib/http.js';
 import { readDoc, transact } from '../lib/store.js';
+import { TRIPS } from '../config/trips.js';
 
 // In-place migrations for states saved by older versions.
 function normalizeState(state) {
@@ -41,4 +42,31 @@ export async function updateState(env, trip, fn) {
     state.updatedAt = Date.now();
     return { doc: state, result };
   });
+}
+
+// Remove one person's footprint from every trip (used by the thorough
+// user deletion in users/admin.js): their listing votes, their name in
+// the members lists, and their part in the legacy per-trip expenses.
+// Votes match on the account's token, or on the name for votes cast
+// before the device adopted the account. Returns votes removed.
+export async function scrubUserFromTrips(env, user) {
+  const key = user.name.toLowerCase();
+  const isUsers = v => (!!user.token && v.token === user.token) || String(v.name || '').toLowerCase() === key;
+  let removed = 0;
+  for (const trip of Object.values(TRIPS)) {
+    await updateState(env, trip, state => {
+      for (const l of state.listings) {
+        const before = (l.votes || []).length;
+        l.votes = (l.votes || []).filter(v => !isUsers(v));
+        removed += before - l.votes.length;
+      }
+      state.members = state.members.filter(m => String(m).toLowerCase() !== key);
+      state.expenses = state.expenses.filter(e => {
+        if (String(e.paidBy || '').toLowerCase() === key) return false;
+        e.splitAmong = (e.splitAmong || []).filter(n => String(n).toLowerCase() !== key);
+        return e.splitAmong.length > 0;
+      });
+    });
+  }
+  return removed;
 }

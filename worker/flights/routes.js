@@ -132,6 +132,19 @@ function handleAirports(req, env, url) {
   return j({ ok: true, airports: hits.slice(0, 8).map(([, a]) => airport(a[0])) });
 }
 
+// Remove one person's saved flights entirely (thorough user deletion,
+// users/admin.js), and clear their name from anyone's pickup claim.
+export async function scrubUserFromFlights(env, user) {
+  const key = user.name.toLowerCase();
+  await updateFlights(env, all => {
+    delete all[key];
+    for (const r of Object.values(all)) {
+      if (r && String(r.pickupBy || '').toLowerCase() === key) r.pickupBy = '';
+    }
+    return all;
+  });
+}
+
 export const routes = {
   'GET /api/flights': handleGet,
   'POST /api/flights': handleSave,

@@ -28,3 +28,20 @@ export async function updateFood(env, trip, fn) {
     return { doc: food, result };
   });
 }
+
+// Remove one person's restaurant votes from every trip (thorough user
+// deletion, users/admin.js). Returns votes removed.
+export async function scrubUserFromFood(env, user) {
+  const key = user.name.toLowerCase();
+  let removed = 0;
+  for (const trip of Object.keys(TRIPS)) {
+    await updateFood(env, trip, food => {
+      for (const p of food.places) {
+        const before = (p.votes || []).length;
+        p.votes = (p.votes || []).filter(v => !(!!user.token && v.token === user.token) && String(v.name || '').toLowerCase() !== key);
+        removed += before - p.votes.length;
+      }
+    });
+  }
+  return removed;
+}

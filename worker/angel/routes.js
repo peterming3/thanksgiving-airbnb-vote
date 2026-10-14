@@ -155,6 +155,30 @@ async function handleAdmin(req, env) {
   return j(view(users, out.a, key));
 }
 
+// Remove one person from Secret Angel entirely (thorough user
+// deletion, users/admin.js): their saved prefs, any exclusion entry,
+// and the admin hat if they somehow hold it (falls back to the default
+// admin). If a draw exists, their seat is spliced out of the cycle —
+// whoever was giving to them now gives to their person — so the rest
+// of the circle stays intact; with fewer than two left, the draw goes.
+export async function scrubUserFromAngel(env, user) {
+  const key = user.name.toLowerCase();
+  await updateAngel(env, a => {
+    delete a.prefs[key];
+    a.excluded = a.excluded.filter(k => k !== key);
+    if (a.admin === key) a.admin = DEFAULT_ADMIN;
+    if (a.draw && a.draw.pairs && key in a.draw.pairs) {
+      const pairs = a.draw.pairs;
+      const next = pairs[key];
+      const pred = Object.keys(pairs).find(k => pairs[k] === key);
+      delete pairs[key];
+      if (Object.keys(pairs).length < 2) a.draw = null;
+      else if (pred) pairs[pred] = next;
+    }
+    return a;
+  });
+}
+
 export const routes = {
   'GET /api/angel': handleGet,
   'POST /api/angel/prefs': handlePrefs,

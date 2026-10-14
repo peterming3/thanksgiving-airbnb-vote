@@ -5,6 +5,7 @@
 import { routes as listingRoutes } from './listings/routes.js';
 import { routes as userRoutes } from './users/users.js';
 import { routes as authRoutes } from './users/auth.js';
+import { routes as adminRoutes } from './users/admin.js';
 import { routes as splitRoutes } from './split/routes.js';
 import { routes as foodRoutes } from './food/routes.js';
 import { routes as angelRoutes } from './angel/routes.js';
@@ -20,7 +21,7 @@ export { MahjongHall } from './mahjong/hall.js';
 export { StoreDO } from './store/store.js';
 export { DodgeBoard } from './dodge/board.js';
 
-const ROUTES = { ...listingRoutes, ...userRoutes, ...authRoutes, ...splitRoutes, ...foodRoutes, ...angelRoutes, ...weatherRoutes, ...activityRoutes, ...flightRoutes };
+const ROUTES = { ...listingRoutes, ...userRoutes, ...authRoutes, ...adminRoutes, ...splitRoutes, ...foodRoutes, ...angelRoutes, ...weatherRoutes, ...activityRoutes, ...flightRoutes };
 
 export default {
   async fetch(request, env) {

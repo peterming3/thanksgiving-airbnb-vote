@@ -50,3 +50,23 @@ export async function updateSplit(env, fn) {
     return { doc: split, result };
   });
 }
+
+// Remove one person from the ledger entirely (thorough user deletion,
+// users/admin.js): expenses they paid are deleted, and they are taken
+// out of everyone else's split lists (an expense left with nobody to
+// split it is deleted too). Balances are computed from the expenses on
+// read, so nothing else needs fixing. Returns expenses deleted.
+export async function scrubUserFromSplit(env, user) {
+  const key = user.name.toLowerCase();
+  let removed = 0;
+  await updateSplit(env, split => {
+    const before = split.expenses.length;
+    split.expenses = split.expenses.filter(e => {
+      if (String(e.paidBy || '').toLowerCase() === key) return false;
+      e.splitAmong = (e.splitAmong || []).filter(n => String(n).toLowerCase() !== key);
+      return e.splitAmong.length > 0;
+    });
+    removed = before - split.expenses.length;
+  });
+  return removed;
+}

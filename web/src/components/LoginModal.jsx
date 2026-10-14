@@ -189,7 +189,7 @@ export default function LoginModal() {
                     </div>
                   ))}
                 </div>
-                <p className="mt-1.5 text-[11px] leading-snug text-slate-400">删的是账号本身；ta 之前投过的票、记过的账还会以这个名字留在记录里。</p>
+                <p className="mt-1.5 text-[11px] leading-snug text-slate-400">彻底删除：账号连同 ta 的投票、航班、分账、Secret Angel 记录一起清掉，不可恢复。</p>
               </div>
             )}
             <button onClick={closeLogin} className="mt-4 w-full text-center text-sm font-medium text-slate-400 transition hover:text-slate-600">先随便看看 →</button>
